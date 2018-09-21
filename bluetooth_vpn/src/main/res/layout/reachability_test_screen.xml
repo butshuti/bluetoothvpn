@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:alpha="0.9"
+    android:gravity="center_horizontal"
+    android:weightSum="1">
+    <android.support.v7.widget.CardView
+        xmlns:card_view="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/network_status_container"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:visibility="visible"
+        android:layout_gravity="center"
+        card_view:cardCornerRadius="4dp">
+
+    <TextView
+        android:id="@+id/network_status_text"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+    </android.support.v7.widget.CardView>
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/progresbar_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:layout_weight="1">
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="280dip"
+            android:layout_height="280dip"
+            android:layout_centerInParent="true"
+            android:max="100"
+            android:progress="0"
+            android:progressDrawable="@drawable/circle"/>
+        <ProgressBar
+            android:id="@+id/indeterminateProgressBar"
+            android:layout_width="300dip"
+            android:layout_height="300dip"
+            android:layout_centerInParent="true"
+            android:indeterminate="true"/>
+        <TextView
+            android:id="@+id/progress_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:textSize="30dip"
+            android:gravity="center"
+            android:textColor="@color/colorProgressTextColor"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"/>
+    </RelativeLayout>
+</LinearLayout>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="edu.unt.nsllab.butshuti.bluetoothvpn.ui.BluetoothVPNActivity"
+    tools:showIn="diagnostics_screen_navigation_view">
+    <item android:title="@string/menu_title_network_diagnostics">
+        <menu>
+            <item
+                android:id="@+id/nav_menu_item_ping_test"
+                android:title="@string/menu_title_ping_test"
+                android:icon="@drawable/ic_network_test"
+                app:showAsAction="always"
+                />
+            <item
+                android:id="@+id/nav_menu_item_traceroute"
+                android:title="@string/menu_title_traceroute"
+                android:icon="@drawable/graph"
+                app:showAsAction="always"
+                />
+        </menu>
+    </item>
+    <item android:title="@string/menu_title_network_administration">
+        <menu>
+            <item
+                android:id="@+id/nav_menu_item_routing_peers"
+                android:icon="@drawable/ic_device_hub"
+                android:title="@string/menu_title_routing_peers" />
+            <item
+                android:id="@+id/nav_menu_item_configure_network"
+                android:icon="@drawable/network"
+                android:title="@string/menu_title_activity_settings" />
+        </menu>
+    </item>
+</menu>

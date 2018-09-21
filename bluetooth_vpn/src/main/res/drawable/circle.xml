@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list   xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/progressbar_background">
+        <shape xmlns:android="http://schemas.android.com/apk/res/android"
+            android:useLevel="false"
+            android:innerRadiusRatio="1000"
+            android:thicknessRatio="2.5"
+            android:shape="ring">
+            <solid android:color="@color/colorPrimaryDarkFaded"/>
+        </shape>
+    </item>
+    <item android:id="@+id/progressbar_circle">
+        <shape xmlns:android="http://schemas.android.com/apk/res/android"
+            android:useLevel="true"
+            android:innerRadiusRatio="1000"
+            android:thicknessRatio="2.5"
+            android:shape="ring">
+            <solid android:color="@color/colorPrimaryDark" />
+        </shape>
+    </item>
+</layer-list>

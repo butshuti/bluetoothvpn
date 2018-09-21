@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="default_routing_mode_entries">
+        <item>Closest Neighbor</item>
+        <item>Farthest Neighbor</item>
+        <item>Most Reliable Peer</item>
+        <item>Flood</item>
+    </string-array>
+    <string-array name="default_routing_mode_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+</resources>

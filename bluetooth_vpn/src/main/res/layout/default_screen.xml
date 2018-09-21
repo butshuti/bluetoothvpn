@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/content_frame"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <android.support.design.widget.AppBarLayout
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:theme="@style/AppTheme.AppBarOverlay"
+        style="@style/tabStyle">
+        <android.support.v7.widget.Toolbar
+            android:id="@id/toolbar"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:minHeight="?attr/actionBarSize"
+            style="@style/tabStyle"/>
+        <include
+            android:id="@+id/search_view"
+            layout="@layout/custom_search_view"
+            android:visibility="gone"/>
+    </android.support.design.widget.AppBarLayout>
+    <FrameLayout
+        android:id="@+id/frame"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/refresh_fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom"
+        android:src="@android:drawable/ic_popup_sync"
+        android:layout_margin="16dp"
+        android:visibility="gone"/>
+</android.support.design.widget.CoordinatorLayout>

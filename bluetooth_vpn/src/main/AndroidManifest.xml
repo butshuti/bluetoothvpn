@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="edu.unt.nsllab.butshuti.bluetoothvpn">
+
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme">
+        <service
+            android:name=".vpn.BTVpnService"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.BIND_VPN_SERVICE">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+        </service>
+
+        <activity
+            android:name="edu.unt.nsllab.butshuti.bluetoothvpn.ui.BluetoothVPNActivity"
+            android:icon="@android:drawable/stat_sys_data_bluetooth"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="edu.unt.nsllab.butshuti.bluetoothvpn.ui.ReachabilityTestActivity"
+            android:exported="true"
+            android:label="Reachability Test"
+            android:theme="@style/DialogTheme">
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ui.ServiceLocatorActivity"
+            android:exported="true"
+            android:icon="@android:drawable/stat_sys_data_bluetooth"
+            android:label="Bluetooth Service Locator"
+            android:permission="android.permission.BLUETOOTH_ADMIN"
+            android:theme="@style/DialogTheme">
+            <intent-filter>
+                <action android:name="edu.unt.nsllab.butshuti.bluetoothvpn.bt_service_locator" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/json" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ui.SettingsActivity"
+            android:label="@string/menu_title_activity_settings"
+            android:parentActivityName="edu.unt.nsllab.butshuti.bluetoothvpn.ui.BluetoothVPNActivity">
+            <!--<meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ui.BluetoothVPNActivity"/>-->
+            <intent-filter>
+                <action android:name="edu.unt.nsllab.butshuti.bluetoothvpn.bt_service_settings" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="edu.unt.nsllab.butshuti.bluetoothvpn.ui.PingTestActivity"
+            android:label="@string/menu_title_ping_test"
+            android:parentActivityName="edu.unt.nsllab.butshuti.bluetoothvpn.ui.BluetoothVPNActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="edu.unt.nsllab.butshuti.bluetoothvpn.ui.BluetoothVPNActivity"/>
+        </activity>
+        <activity
+            android:name="edu.unt.nsllab.butshuti.bluetoothvpn.ui.TracerouteActivity"
+            android:label="@string/menu_title_traceroute"
+            android:parentActivityName="edu.unt.nsllab.butshuti.bluetoothvpn.ui.BluetoothVPNActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="edu.unt.nsllab.butshuti.bluetoothvpn.ui.BluetoothVPNActivity"/>
+        </activity>
+    </application>
+
+</manifest>

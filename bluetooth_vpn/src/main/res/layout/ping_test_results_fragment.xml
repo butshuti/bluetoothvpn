@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.fragments.PingTestResultsFragment">
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="@dimen/fab_margin"
+        android:weightSum="10">
+        <include layout="@layout/net_probe_results"
+            android:layout_width="fill_parent"
+            android:orientation="horizontal"
+            android:layout_height="0dp"
+            android:layout_weight="9"/>
+    </LinearLayout>
+</FrameLayout>

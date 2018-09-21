@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edu.unt.nsllab.butshuti.bluetoothvpn.ui.custom_views.CustomSearchView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="?attr/actionBarSize"
+    android:orientation="horizontal"
+    android:gravity="center"
+    android:padding="5dp"
+    style="@style/tabStyle"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditText
+        android:id="@+id/search_text"
+        android:layout_width="0dip"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="@color/colorPrimary"
+        android:singleLine="true"
+        android:layout_gravity="start"
+        android:inputType="number|numberDecimal"
+        android:digits="0123456789."
+        android:gravity="center"
+        android:textColor="@color/colorPrimaryDark"
+        android:textColorHint="@color/colorPrimaryDarkFaded"
+        android:hint="@string/ip_address_hint"/>
+    <Button
+        android:id="@+id/search_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:background="@color/colorPrimary"
+        android:textColor="@color/colorPrimaryDark"
+        style="@android:attr/borderlessButtonStyle"
+        android:textAllCaps="true"
+        android:textStyle="bold"
+        android:clickable="true"
+        android:onClick="onSearchViewClick"
+        android:text="Run"/>
+</edu.unt.nsllab.butshuti.bluetoothvpn.ui.custom_views.CustomSearchView>

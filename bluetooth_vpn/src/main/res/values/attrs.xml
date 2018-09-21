@@ -1,0 +1,9 @@
+<resources>
+    <declare-styleable name="NodeStatusCardView">
+        <attr name="cardview_background" format="color|reference" />
+    </declare-styleable>
+    <declare-styleable name="TwoColumnsTaggedTextView">
+        <attr name="column_title" format="string"/>
+        <attr name="column_content" format="string"/>
+    </declare-styleable>
+</resources>

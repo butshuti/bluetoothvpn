@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:id="@+id/diagnostics_screen_frame_layout"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:background="@color/colorPrimary"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+<include layout="@layout/app_bar"/>
+
+<android.support.v4.view.ViewPager
+    android:id="@+id/pager"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginTop="100dp"/>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/config_fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start|bottom"
+        android:src="@android:drawable/ic_menu_edit"
+        android:layout_margin="16dp" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/sync_fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom"
+        android:src="@android:drawable/ic_popup_sync"
+        android:layout_margin="16dp" />
+</FrameLayout>

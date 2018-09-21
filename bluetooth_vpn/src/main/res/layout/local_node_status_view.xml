@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edu.unt.nsllab.butshuti.bluetoothvpn.ui.custom_views.ServiceStatusCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:foreground="?android:attr/selectableItemBackground"
+    android:clickable="true"
+    android:layout_width="match_parent"
+    android:layout_height="150dp"
+    android:layout_margin="5dp">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@drawable/app_gradient_background"
+        android:gravity="center">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center">
+
+            <ImageView
+                android:id="@+id/node_icon"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_gravity="center"
+                android:alpha="0.8"
+                android:background="@drawable/oval_background"
+                android:src="@android:drawable/stat_sys_data_bluetooth" />
+
+            <TextView
+                android:id="@+id/node_name_textview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="Node Name"
+                android:textStyle="bold"
+                android:textColor="@android:color/darker_gray" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left"
+                android:paddingRight="5dp"
+                android:text="Interface IP Address:"/>
+            <TextView
+                android:id="@+id/node_ip_textview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:layout_gravity="right"
+                android:text="IP Address"/>
+        </LinearLayout>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/light_gray"
+            android:layout_margin="10dp"/>
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="5dp"
+            android:weightSum="3">
+            <edu.unt.nsllab.butshuti.bluetoothvpn.ui.custom_views.TwoColumnsTaggedTextView
+                android:id="@+id/service_status_column"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:layout_weight="1"
+                app:column_title="Status:"
+                app:column_content="DISCONNECTED" />
+            <edu.unt.nsllab.butshuti.bluetoothvpn.ui.custom_views.TwoColumnsTaggedTextView
+                android:id="@+id/peer_count_column"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:layout_weight="1"
+                app:column_title="Recent Peers:"
+                app:column_content="4"/>
+            <edu.unt.nsllab.butshuti.bluetoothvpn.ui.custom_views.TwoColumnsTaggedTextView
+                android:id="@+id/pkt_count_column"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:layout_weight="1"
+                app:column_title="Pkt count:"
+                app:column_content="0"/>
+        </LinearLayout>
+    </LinearLayout>
+</edu.unt.nsllab.butshuti.bluetoothvpn.ui.custom_views.ServiceStatusCardView>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#e3ecf7</color>
+    <color name="colorPrimaryDarkFaded">#665663B1</color>
+    <color name="colorPrimaryDark">#FF5663B1</color>
+    <color name="colorSelectable">#11d2aae9</color>
+    <color name="colorAccent">#DD4081</color>
+    <color name="colorProgressTextColor">#62b662</color>
+</resources>

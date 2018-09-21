@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="Peering Modes">
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="@string/pref_key_enable_passive_mode"
+            android:summary="@string/pref_summary_enable_passive_mode"
+            android:title="@string/pref_title_enable_passive_mode" />
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="@string/pref_key_enable_client_mode"
+            android:summary="@string/pref_summary_enable_client_mode"
+            android:title="@string/pref_title_enable_client_mode" />
+        <EditTextPreference
+            android:defaultValue="1"
+            android:inputType="number"
+            android:dependency="@string/pref_key_enable_client_mode"
+            android:key="@string/pref_key_num_active_connections"
+            android:summary="@string/pref_summary_num_active_connections"
+            android:title="@string/pref_title_num_active_connections" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="VPN Options">
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="@string/pref_key_install_default_routes"
+            android:summary="@string/pref_summary_install_default_routes"
+            android:title="@string/pref_title_install_default_routes" />
+        <ListPreference
+            android:defaultValue="0"
+            android:dialogTitle="@string/pref_title_routing_mode"
+            android:entries="@array/default_routing_mode_entries"
+            android:entryValues="@array/default_routing_mode_values"
+            android:key="@string/pref_key_routing_mode"
+            android:summary="@string/pref_summary_routing_mode"
+            android:title="@string/pref_title_routing_mode" />
+    </PreferenceCategory>
+</PreferenceScreen>

@@ -1,0 +1,51 @@
+<resources>
+    <string name="app_name">Bluetooth VPN</string>
+    <string name="action_bt_configured_peer_changed">configured_peer_changed</string>
+    <string name="action_bt_service_locator">edu.unt.nsllab.butshuti.bluetoothvpn.bt_service_locator</string>
+    <string name="action_bt_service_settings">edu.unt.nsllab.butshuti.bluetoothvpn.bt_service_settings</string>
+    <string name="action_vpn_stop_service">stop_vpn_service</string>
+    <string name="action_vpn_show_status">vpn_show_status</string>
+    <string name="extra_iface_config_mode_router">iface_config_mode_router</string>
+    <string name="extra_iface_config_mode_server">iface_config_mode_server</string>
+    <string name="extra_iface_config_mode_client">iface_config_mode_client</string>
+    <string name="vpn_service_activated">Bluetooth VPN activated</string>
+    <string name="msg_vpn_service_started">VPN service started</string>
+    <string name="action_bt_configured_peer_revoked">action_bt_configured_peer_revoked</string>
+    <string name="net_probe_result_data">SD_READ_RESULT_DATA</string>
+
+    <string name="tab_name_ping">Ping Test</string>
+    <string name="tab_name_service_status">Service Status</string>
+    <string name="title_activity_main">MainActivity</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="menu_title_network_diagnostics">Diagnostics</string>
+    <string name="menu_title_ping_test">Ping Test</string>
+    <string name="menu_title_traceroute">Traceroute</string>
+    <string name="menu_title_network_administration">Network Administration</string>
+    <string name="tab_name_connectivity_graph">Connectivity Graph</string>
+    <string name="menu_title_routing_peers">Routing Peers</string>
+    <string name="menu_title_activity_settings">Network Configuration</string>
+
+    <string name="pref_key_routing_mode">key_routing_mode</string>
+    <string name="pref_title_routing_mode">Default Routing Mode</string>
+    <string name="pref_summary_routing_mode">Mode for determining the next hop for non-matched destinations.</string>
+
+    <string name="pref_key_install_default_routes">pref_key_install_default_routes</string>
+    <string name="pref_title_install_default_routes">Install default routes</string>
+    <string name="pref_summary_install_default_routes">Add default routes for external addresses.</string>
+
+    <string name="pref_key_enable_passive_mode">pref_key_enable_passive_mode</string>
+    <string name="pref_title_enable_passive_mode">Accept Peering Connections</string>
+    <string name="pref_summary_enable_passive_mode">Accept peering connections from authenticated clients.</string>
+
+    <string name="pref_key_enable_client_mode">pref_key_enable_client_mode</string>
+    <string name="pref_title_enable_client_mode">Enable Client Mode</string>
+    <string name="pref_summary_enable_client_mode">Initiate and maintain active peering connections to configured servers.</string>
+
+    <string name="pref_key_num_active_connections">pref_key_num_active_connections</string>
+    <string name="pref_summary_num_active_connections">Maximum number of concurrent active peer connections.</string>
+    <string name="pref_title_num_active_connections">Maximum number of servers</string>
+    <string name="ip_address_hint">IP address</string>
+</resources>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edu.unt.nsllab.butshuti.bluetoothvpn.ui.custom_views.NodeStatusCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:foreground="?android:attr/selectableItemBackground"
+    android:clickable="true"
+    android:onClick="onNodeViewClick"
+    android:layout_width="150dp"
+    android:layout_height="120dp"
+    android:layout_margin="5dp">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center">
+        <ImageView
+            android:id="@+id/node_icon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/oval_error_background"
+            android:src="@android:drawable/stat_sys_data_bluetooth"
+            android:padding="10dp"/>
+        <TextView
+            android:id="@+id/node_ip_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:layout_marginTop="5dp"
+            android:text="IP Address"/>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/light_gray"
+            android:layout_margin="5dp"/>
+        <TextView
+            android:id="@+id/node_name_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Node Name"
+            android:padding="2dp"
+            android:textColor="@android:color/darker_gray"/>
+    </LinearLayout>
+</edu.unt.nsllab.butshuti.bluetoothvpn.ui.custom_views.NodeStatusCardView>
