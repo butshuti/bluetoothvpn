@@ -8,7 +8,6 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import edu.unt.nsllab.butshuti.bluetoothvpn.tunnel.InterfaceController;
@@ -69,7 +68,7 @@ public class ServerBluetoothSockerAdaptor extends RemoteInterfaceAdaptor impleme
                 throw new LocalInterfaceBridge.BridgeException(e);
             }
             if(socket != null && socket.isConnected()){
-                SocketThread st = new SocketThread(socket, this);
+                Connection st = new Connection(socket, this);
                 LocalInterfaceBridge.addGateway(socket.getRemoteDevice().getAddress());
                 String remoteDeviceAddress = socket.getRemoteDevice().getAddress();
                 if(openSockets.containsKey(remoteDeviceAddress)){
@@ -126,6 +125,7 @@ public class ServerBluetoothSockerAdaptor extends RemoteInterfaceAdaptor impleme
 
                 }
                 openSockets.remove(remotePeerAddress);
+                LocalInterfaceBridge.deleteGateway(remotePeerAddress);
             }
         }
     }

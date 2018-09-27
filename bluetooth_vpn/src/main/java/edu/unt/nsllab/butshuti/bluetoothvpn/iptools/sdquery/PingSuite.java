@@ -37,8 +37,8 @@ public class PingSuite {
      * @param sessID the session cookie for result aggregation
      */
     public static void ping(SDQuery sdQuery, long sessID){
-        String cmd = String.format("%s -A -R -c %d -i %f %s",
-                SYSTEM_PING_BINARY_PATH, sdQuery.getMaxProbes(), sdQuery.getSoTimeoutMs()/1000.0, sdQuery.getHostAddress().getHostAddress());
+        String cmd = String.format("%s -A -R -s %d -c %d -i %f %s",
+                SYSTEM_PING_BINARY_PATH, sdQuery.getPacketSize()-8, sdQuery.getMaxProbes(), sdQuery.getSoTimeoutMs()/1000.0, sdQuery.getHostAddress().getHostAddress());
         ReachabilityTestResult result = null;
         Runtime runtime = Runtime.getRuntime();
         try {
@@ -142,5 +142,4 @@ public class PingSuite {
         }
         return -1;
     }
-
 }

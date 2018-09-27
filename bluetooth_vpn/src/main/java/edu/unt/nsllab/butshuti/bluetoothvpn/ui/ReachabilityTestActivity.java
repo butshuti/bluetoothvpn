@@ -35,6 +35,7 @@ public class ReachabilityTestActivity extends Activity implements SDQuery.SDProg
     private View progressView, networkStatusView;
     private long lastRequestTs = -1;
     private InetAddress targetHost;
+    private SDQueryExecutor sdQueryExecutor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +55,7 @@ public class ReachabilityTestActivity extends Activity implements SDQuery.SDProg
         if(savedInstanceState == null){
             lastRequestTs = getCurTsSeconds();
         }
-        SDQueryExecutor.nextExecutor(this);
+        sdQueryExecutor = new SDQueryExecutor("reachabilityTest");
     }
 
     @Override
@@ -237,6 +238,7 @@ public class ReachabilityTestActivity extends Activity implements SDQuery.SDProg
     private void sendProbes(final InetAddress hostAddress, final int maxProbes){
         SDQuery sdQuery = new SDQuery(getMainLooper(), this, hostAddress, numAttempts, maxProbes);
         sdQuery.setSoTimeoutMs(SDQueryExecutor.DEFAULT_SO_TIMEOUT_MS);
+        progressTextView.setText("Service Discovery started...");
         if(sdScheduler.getConfiguredSoTimeoutMs() < 0){
             //Use the task's defaults for the first time
             sdScheduler.setConfiguredSoTimeoutMs(sdQuery.getSoTimeoutMs());
@@ -246,6 +248,6 @@ public class ReachabilityTestActivity extends Activity implements SDQuery.SDProg
             sdQuery.setSoTimeoutMs(sdScheduler.getCurSoTimeoutMs());
             sdQuery.setMaxProbes(sdScheduler.getNumProbes());
         }
-        SDQueryExecutor.schedule(sdQuery);
+        sdQueryExecutor.schedule(sdQuery);
     }
 }

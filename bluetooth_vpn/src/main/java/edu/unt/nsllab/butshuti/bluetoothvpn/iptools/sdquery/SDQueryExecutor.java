@@ -1,7 +1,5 @@
 package edu.unt.nsllab.butshuti.bluetoothvpn.iptools.sdquery;
 
-import android.content.Context;
-import android.os.Process;
 import android.os.SystemClock;
 
 import java.io.IOException;
@@ -11,21 +9,13 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.util.ArrayList;
-import java.util.Deque;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.unt.nsllab.butshuti.bluetoothvpn.data.objects.ReachabilityTestResult;
+import edu.unt.nsllab.butshuti.bluetoothvpn.utils.GlobalExecutorService;
 import edu.unt.nsllab.butshuti.bluetoothvpn.utils.Logger;
 
 import static edu.unt.nsllab.butshuti.bluetoothvpn.iptools.sdquery.PingSuite.sysPingAvailable;
@@ -39,7 +29,7 @@ import static edu.unt.nsllab.butshuti.bluetoothvpn.iptools.sdquery.PingSuite.sys
  * </p>
  * @author butshuti
  */
-public class SDQueryExecutor extends TimerTask {
+public class SDQueryExecutor {
 
     public final static int DEFAULT_SO_TIMEOUT_MS = 300; //Socket timeout
     private final static int ECHO_SERV_PORT = 7;
@@ -48,69 +38,16 @@ public class SDQueryExecutor extends TimerTask {
     private DatagramSocket datagramSocket = null;
     protected Map<String, Long> pendingAcks = new HashMap<>();
     private volatile boolean cancelled = false, freshRestart = false;
-    private Context context;
     private long taskGroupBlockingTimerTs = -1;
-
-    private static final BlockingQueue<SDQuery> sdQueries = new LinkedBlockingQueue<>();
-    private static final Deque<SDQueryExecutor> runningInstances = new LinkedList<>();
-    private static int count = 0;
-    private static final int MAX_INSTANCES = 2;
-    private static final Timer timer = new Timer("SDQueryExecutor", true);
+    private String label;
 
     private boolean useICMP = sysPingAvailable(); // Use system's ping utility for ICMP, if available.
     private Random random = new Random(System.currentTimeMillis());
 
-    private synchronized static void refreshActiveExecutors(){
-        List<SDQueryExecutor> expiredExecutors = new ArrayList<>();
-        for(SDQueryExecutor ex : runningInstances){
-            if(ex.isCancelled()){
-                expiredExecutors.add(ex);
-            }
-        }
-        for(SDQueryExecutor ex : expiredExecutors){
-            runningInstances.remove(ex);
-            SDQueryExecutor executor = new SDQueryExecutor(ex.context);
-            runningInstances.addLast(executor);
-            timer.scheduleAtFixedRate(executor, 0, 2000*runningInstances.size());
-        }
-    }
-
-    /**
-     * Constructs a new async task to start probes.
-     */
-    public synchronized static boolean nextExecutor(Context context){
-        //Create new instance if the last one is still busy
-        SDQueryExecutor instance = null;
-        refreshActiveExecutors();
-        if(runningInstances.size() < MAX_INSTANCES){
-            instance = new SDQueryExecutor(context);
-            runningInstances.addLast(instance);
-            timer.scheduleAtFixedRate(instance, 0, 2000*runningInstances.size());
-        }else{
-            instance = runningInstances.pollFirst();
-            runningInstances.addLast(instance);
-        }
-        return !instance.isCancelled();
-    }
-
-    /**
-     * Start the next available/idle executor to handle a pending {@link SDQuery}.
-     */
-    private static synchronized void nextExecutor(){
-        refreshActiveExecutors();
-    }
-
-    /**
-     * Create a new instance.
-     * @param context The current application context.
-     */
-    protected SDQueryExecutor(Context context){
-        //super("SDQueryExecutor#" + (count++));
-        //setDaemon(true);
-        android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-        this.context = context;
+    public SDQueryExecutor(String label){
         so_timeout_ms = DEFAULT_SO_TIMEOUT_MS;
         useCustomSoTimeout = true;
+        this.label = label;
     }
 
     /**
@@ -344,60 +281,12 @@ public class SDQueryExecutor extends TimerTask {
         return reachabilityTestResult;
     }
 
-    /**
-     * Schedule a new {@link SDQuery} on the next available {@link SDQueryExecutor} from the internal pool.
-     * @param sdQuery The SD query to schedule.
-     */
-    public static void schedule(SDQuery sdQuery){
-        if(sdQueries.size() > (runningInstances.size() * runningInstances.size())/2){
-            //Purge too old queries from the queue
-            cancelPendingQueries();
-        }
-        //Add the query to the queue.
-        synchronized (sdQueries){
-            sdQueries.add(sdQuery);
-        }
-        nextExecutor();
-    }
-
-    /**
-     * Start the thread's event loop.
-     * The loop will exit when this instance is interrupted. In that case it can be restarted.
-     */
-    @Override
-    public void run(){
-        freshRestart = true;
-       while(!isCancelled()){
-           freshRestart = false;
-           try {
-               adjustTaskGroupBlockingTimer();
-               runQuery(sdQueries.take());
-           } catch (InterruptedException e) {
-               Logger.logE("Interrupted -- Pending SD queries: " + sdQueries.size());
-           }
-       }
-       shutDown();
-    }
-
-    /**
-     * Cancel all pending SD queries.
-     */
-    private static void cancelPendingQueries(){
-        synchronized (sdQueries){
-            int numQueries = sdQueries.size();
-            for(int i=0; i < numQueries; i++){
-                try {
-                    SDQuery sdQuery = sdQueries.remove();
-                    if(i == numQueries - 1){
-                        //Only send results for the very last one, because those results get posted to the UI
-                        //Doing so for each query would render the UI unresponsive.
-                        sdQuery.postSDResult(ReachabilityTestResult.EMPTY_SD.setCancelled(ReachabilityTestResult.DiscoveryMode.UNSPECIFIED));
-                    }
-                }catch (NoSuchElementException e){
-                    Logger.logE(e.getMessage());
-                    break;
-                }
+    public void schedule(SDQuery sdQuery){
+        GlobalExecutorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                runQuery(sdQuery);
             }
-        }
+        }, "SDQueryExecutor#"+label);
     }
 }

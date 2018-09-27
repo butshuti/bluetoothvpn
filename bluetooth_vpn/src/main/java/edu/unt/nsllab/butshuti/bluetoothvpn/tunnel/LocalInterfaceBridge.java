@@ -133,12 +133,6 @@ public class LocalInterfaceBridge {
                 throw new BridgeException("Cannot reassign address " + nextAddr);
             }
             reservedAddresses.put(devAddress, nextAddr);
-            Logger.logD("NEXT_ADDR: Assigning next: " + nextAddr + " for " + devAddress);
-            Logger.logD("NEXT_ADDR: assigned:------");
-            for(String s : reservedAddresses.keySet()){
-                Logger.logD("NEXT_ADDR: " + s + " => " + reservedAddresses.get(s));
-            }
-            Logger.logD("NEXT_ADDR: ---------------");
             return nextAddr;
         }
     }
@@ -159,6 +153,12 @@ public class LocalInterfaceBridge {
      */
     public static void addGateway(String remoteDevAddress) throws BridgeException {
         addGateway(remoteDevAddress, false);
+    }
+
+    public static void deleteGateway(String remoteAddress){
+        if(routes != null && routes.containsKey(remoteAddress)){
+            routes.remove(remoteAddress);
+        }
     }
 
     /**
@@ -196,7 +196,8 @@ public class LocalInterfaceBridge {
             return routes.get(inetAddress);
         }
         try{
-            InetAddress defaultRoute = getDefault();if(routes.containsKey(defaultRoute)){
+            InetAddress defaultRoute = getDefault();
+            if(routes.containsKey(defaultRoute)){
                 return routes.get(defaultRoute);
             }
         }catch (UnknownHostException e){

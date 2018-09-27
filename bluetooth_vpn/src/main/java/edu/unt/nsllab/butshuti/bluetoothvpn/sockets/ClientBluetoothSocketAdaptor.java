@@ -21,7 +21,7 @@ import edu.unt.nsllab.butshuti.bluetoothvpn.utils.Logger;
 public class ClientBluetoothSocketAdaptor extends RemoteInterfaceAdaptor{
 
     private BluetoothSocketWrappers.ClientSocket clientSocket;
-    private SocketThread socketThread;
+    private Connection connectionPipe;
 
     public ClientBluetoothSocketAdaptor(BluetoothSocketWrappers.ClientSocket socket, InterfaceController interfaceController){
         super(interfaceController);
@@ -46,11 +46,12 @@ public class ClientBluetoothSocketAdaptor extends RemoteInterfaceAdaptor{
             }
             try{
                 reportNewConnection(clientSocket.getRemoteDevice().getAddress());
-                socketThread = new SocketThread(btSocket, this);
+                connectionPipe = new Connection(btSocket, this);
                 LocalInterfaceBridge.addGateway(btSocket.getRemoteDevice().getAddress());
-                socketThread.start();
+                connectionPipe.start();
             }catch (Exception e) {
                 setLastException(new Exception(String.format("Failed to connect to %s: %s", clientSocket.getRemoteDevice(), e.getMessage())));
+                LocalInterfaceBridge.deleteGateway(btSocket.getRemoteDevice().getAddress());
                 Logger.logE(e.getMessage());
                 if(btSocket != null){
                     try {
@@ -79,8 +80,8 @@ public class ClientBluetoothSocketAdaptor extends RemoteInterfaceAdaptor{
         } catch (IOException e) {
 
         }
-        if(socketThread != null){
-            socketThread.interrupt();
+        if(connectionPipe != null){
+            connectionPipe.interrupt();
         }
     }
 }

@@ -8,8 +8,6 @@ import java.net.InetAddress;
 
 import edu.unt.nsllab.butshuti.bluetoothvpn.data.objects.ReachabilityTestResult;
 
-import static edu.unt.nsllab.butshuti.bluetoothvpn.iptools.sdquery.SDQuery.SDQueryHandler.DEFAULT_NUM_HOPS;
-import static edu.unt.nsllab.butshuti.bluetoothvpn.iptools.sdquery.SDQuery.SDQueryHandler.DEFAULT_PACKET_SIZE;
 import static edu.unt.nsllab.butshuti.bluetoothvpn.iptools.sdquery.SDQuery.SDQueryHandler.MSG_PROGRESS;
 import static edu.unt.nsllab.butshuti.bluetoothvpn.iptools.sdquery.SDQuery.SDQueryHandler.MSG_RESULT;
 
@@ -22,50 +20,17 @@ import static edu.unt.nsllab.butshuti.bluetoothvpn.iptools.sdquery.SDQuery.SDQue
  * and results to the main UI thread through a {@link SDProgressListener}.
  */
 public class SDQuery {
-
-    /**
-     * Handler for posting SD progress and results to the UI through a {@link SDProgressListener}.
-     */
-    static class SDQueryHandler extends Handler {
-        static final int MSG_PROGRESS = 1;
-        static final int MSG_RESULT = 2;
-        static final int DEFAULT_NUM_HOPS = 64;
-        static final int DEFAULT_PACKET_SIZE = 128;
-
-        private SDProgressListener listener;
-
-        /**
-         * Create a new handler instance. The caller must have prepared the main looper beforehand.
-         * @param looper {@see {@link Handler#Handler(Looper)}}
-         * @param listener a progress listener for updating the UI
-         */
-        SDQueryHandler(Looper looper, SDProgressListener listener){
-            super(looper);
-            this.listener = listener;
-        }
-        @Override
-        public void handleMessage(Message msg) {
-            if(listener == null){
-                return;
-            }
-            switch (msg.what){
-                case MSG_PROGRESS:
-                    listener.updateProgress(msg.arg1, msg.arg2);
-                    break;
-                case MSG_RESULT:
-                    listener.postResult((ReachabilityTestResult) msg.obj, msg.arg1);
-                    break;
-            }
-        }
-    }
+    static final int ICMP_DEFAULT_TTL = 64;
+    static final int ICMP_MIN_PACKET_SIZE = 28;
+    static final int ICMP_DEFAULT_MAX_PACKET_SIZE = 256;
 
     private SDQueryHandler sdQueryHandler; //The UI handler
     private int taskIndex; //The task index (for debugging purposes only)
     private int maxProbes; //The number of probes to send
     private int so_timeout_ms; //The timeout when receiving/waiting for replies
 
-    private int max_ttl; //The maximum number of hops
-    private int packet_size; //The maximum packet size
+    private int maxTTL; //The maximum number of hops
+    private int packetSize; //The maximum packet size (including the 8 bytes for ICMP header + 20 bytes for IP header)
     private InetAddress hostAddress; //The destination address
 
     /**
@@ -81,8 +46,8 @@ public class SDQuery {
         this.taskIndex = taskIndex;
         this.maxProbes = maxProbes;
         this.hostAddress = dst;
-        packet_size = DEFAULT_PACKET_SIZE;
-        max_ttl = DEFAULT_NUM_HOPS;
+        packetSize = ICMP_DEFAULT_MAX_PACKET_SIZE;
+        maxTTL = ICMP_DEFAULT_TTL;
     }
 
     public SDQuery setMaxProbes(int numProbes){
@@ -97,19 +62,20 @@ public class SDQuery {
         return this;
     }
 
-    public SDQuery setMax_ttl(int max_ttl) {
-        this.max_ttl = max_ttl;
+    public SDQuery setMaxTTL(int maxTTL) {
+        this.maxTTL = maxTTL;
         return this;
     }
 
-    public SDQuery setPacket_size(int packet_size) {
-        this.packet_size = packet_size;
+    public SDQuery setPacketSize(int packetSize) {
+        this.packetSize = Math.min(packetSize, ICMP_MIN_PACKET_SIZE);
         return this;
     }
 
     public int getMaxProbes(){
         return maxProbes;
     }
+
     public int getSoTimeoutMs(){
         return so_timeout_ms;
     }
@@ -117,12 +83,13 @@ public class SDQuery {
         return hostAddress;
     }
     public int getMaxTtl() {
-        return max_ttl;
+        return maxTTL;
     }
 
     public int getPacketSize() {
-        return packet_size;
+        return packetSize;
     }
+
     /**
      * Update state when a SD reply is received.
      * @param progress The new progress, as a tuple (currentIndex, maxProbes).
@@ -162,5 +129,39 @@ public class SDQuery {
          * @param probeIdx The probe index.
          */
         void postResult(ReachabilityTestResult result, int probeIdx);
+    }
+
+    /**
+     * Handler for posting SD progress and results to the UI through a {@link SDProgressListener}.
+     */
+    static final class SDQueryHandler extends Handler {
+        static final int MSG_PROGRESS = 1;
+        static final int MSG_RESULT = 2;
+
+        private SDProgressListener listener;
+
+        /**
+         * Create a new handler instance. The caller must have prepared the main looper beforehand.
+         * @param looper {@see {@link Handler#Handler(Looper)}}
+         * @param listener a progress listener for updating the UI
+         */
+        SDQueryHandler(Looper looper, SDProgressListener listener){
+            super(looper);
+            this.listener = listener;
+        }
+        @Override
+        public void handleMessage(Message msg) {
+            if(listener == null){
+                return;
+            }
+            switch (msg.what){
+                case MSG_PROGRESS:
+                    listener.updateProgress(msg.arg1, msg.arg2);
+                    break;
+                case MSG_RESULT:
+                    listener.postResult((ReachabilityTestResult) msg.obj, msg.arg1);
+                    break;
+            }
+        }
     }
 }

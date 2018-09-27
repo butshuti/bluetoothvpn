@@ -4,30 +4,21 @@ import android.bluetooth.BluetoothSocket;
 import android.os.SystemClock;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.ConcurrentHashMap;
 
 import edu.unt.nsllab.butshuti.bluetoothvpn.datagram.Packet;
 import edu.unt.nsllab.butshuti.bluetoothvpn.datagram.WireInterface;
 import edu.unt.nsllab.butshuti.bluetoothvpn.sockets.BluetoothSocketWrappers;
 import edu.unt.nsllab.butshuti.bluetoothvpn.utils.Logger;
-
-import static edu.unt.nsllab.butshuti.bluetoothvpn.tunnel.RemoteInterfaceAdaptor.DummyState.NONE;
-import static edu.unt.nsllab.butshuti.bluetoothvpn.tunnel.RemoteInterfaceAdaptor.DummyState.READ_END;
-import static edu.unt.nsllab.butshuti.bluetoothvpn.tunnel.RemoteInterfaceAdaptor.DummyState.READ_START;
-import static edu.unt.nsllab.butshuti.bluetoothvpn.tunnel.RemoteInterfaceAdaptor.DummyState.WRITE_END;
-import static edu.unt.nsllab.butshuti.bluetoothvpn.tunnel.RemoteInterfaceAdaptor.DummyState.WRITE_START;
+import edu.unt.nsllab.butshuti.bluetoothvpn.utils.ThreadLifeMonitor;
 
 /**
  * Created by butshuti on 12/20/17.
@@ -36,16 +27,9 @@ import static edu.unt.nsllab.butshuti.bluetoothvpn.tunnel.RemoteInterfaceAdaptor
  * This wrapper will extends locally though an {@link InterfaceController}.
  * Implementations of this wrapper will differ in whether they implement a server or client end of the wrapped socket.
  * For instance, while a client socket connects to exactly one remote server, a server socket handles multiple client connections and dispatches sockets to handle each received connection.
- * Individual connections are served by instances of the {@link SocketThread} class.
+ * Individual connections are served by instances of the {@link Connection} class.
  */
 public abstract class RemoteInterfaceAdaptor{
-
-
-    enum DummyState{
-        READ_START, READ_END,
-        WRITE_START, WRITE_END,
-        NONE
-    };
 
     /**
      * Custom exception class.
@@ -133,125 +117,247 @@ public abstract class RemoteInterfaceAdaptor{
      */
     public abstract void stopAdaptor();
 
-    /**
-     * Thread for handling connections received from remote peers.
-     */
-    protected class SocketThread extends Thread implements InterfaceController.RemoteDatagramDeliveryListener {
-
-        private static final int STREAM_REFRESH_INTERVAL = 3000;
-        BluetoothSocket btSocket;
-        RemoteInterfaceAdaptor adaptor;
-        private final Queue<Packet> outputQueue;
-        private final Lock outputQueueLock = new ReentrantLock();
-        private volatile OutputStream outputStream;
-        private boolean errorState;
-        private long pktsIn = 0, pktsOut = 0, lastPktCount = -1;
-        private long stream_refresh_schedule = -1;
-        private long startTs, lastStatsLogTs;
-        private DummyState dummyState = NONE;
-        private ExecutorService executorService = Executors.newSingleThreadExecutor();
+    protected final static class Connection extends WireInterface implements InterfaceController.RemoteDatagramDeliveryListener{
+        private String remoteAddress;
+        private BluetoothSocket socket;
+        private RemoteInterfaceAdaptor adaptor;
+        private boolean active;
+        private long bytesIN = 0, bytesOUT = 0;
+        private PipedInputStream pipedInputStream;
+        private PipedOutputStream pipedOutputStream;
+        private static SocketThread socketThread = null;
 
         /**
          * Create an instance of the socket thread.
-         * @param socket Bluetooth socket, a termination into the remote end of the connection (Input stream and output stream).
+         * @param btSocket Bluetooth socket, a termination into the remote end of the connection (Input stream and output stream).
          * @param adaptor The interface adaptor, a termination into the local end of the connection (through the {@link InterfaceController}).
          */
-        public SocketThread(BluetoothSocket socket, RemoteInterfaceAdaptor adaptor){
-            setDaemon(false);
-            //android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+        public Connection(BluetoothSocket btSocket, RemoteInterfaceAdaptor adaptor){
+            socket = btSocket;
             this.adaptor = adaptor;
-            btSocket = socket;
-            outputQueue = new LinkedList<>();
-            errorState = false;
-            startTs = SystemClock.uptimeMillis();
-            lastStatsLogTs = startTs;
-        }
-
-        @Override
-        public void run(){
-            setName("SocketThread @ " + getName());
-            final InputStream inputStream;
-            String remoteDevAddress = null;
-            long lastRefresh = Math.max(stream_refresh_schedule, SystemClock.elapsedRealtime());
-            try{
-                remoteDevAddress = btSocket.getRemoteDevice().getAddress();
-                inputStream = btSocket.getInputStream();
-                outputStream = btSocket.getOutputStream();
-                WireInterface wireInterface = new WireInterface() {
-                    @Override
-                    protected int read(byte[] buffer, int max) throws IOException {
-                        if(inputStream.available() >= max){
-                            return inputStream.read(buffer);
-                        }
-                        return 0;
-                    }
-                };
-                adaptor.getInterfaceController().registerRemoteDeliveryListener(remoteDevAddress, getChannelID(), this);
-                errorState = !(adaptor.isActive() && btSocket.isConnected());
-                while (adaptor.isActive() && btSocket.isConnected() && !errorState){
-                    dummyState = READ_START;
-                    Packet pkt = wireInterface.readMultipartNext();
-                    if(pkt != null){
-                        adaptor.getInterfaceController().receive(remoteDevAddress, pkt);
-                        pktsIn++;
-                        adaptor.getInterfaceController().registerRemoteDeliveryListener(remoteDevAddress, getChannelID(), this);
-                    }
-                    dummyState = READ_END;
-                    long curTs = SystemClock.elapsedRealtime();
-                    if(flushOutputQueue()){
-                        lastRefresh = curTs;
-                    }else if(stream_refresh_schedule < 0){
-                        stream_refresh_schedule = curTs + STREAM_REFRESH_INTERVAL * 5 ;
-                    }else if(curTs > lastRefresh + STREAM_REFRESH_INTERVAL){
-                        byte data[] = String.format("dev(%s).keepAlive(%d) @%d", remoteDevAddress, STREAM_REFRESH_INTERVAL, lastRefresh).getBytes();
-                        Packet keepAlivePkt = Packet.wrap(data);
-                        keepAlivePkt.setProtocol(Packet.PROTOCOL_PROXIMITY);
-                        write(keepAlivePkt, true);
-                        lastRefresh = curTs;
-                    }
-                    if((pktsIn + pktsOut) % 10000 <= 2){
-                        printStats();
+            remoteAddress = socket.getRemoteDevice().getAddress();
+            if(socketThread == null){
+                synchronized (SocketThread.class){
+                    if(socketThread == null){
+                        socketThread = new SocketThread(adaptor);
                     }
                 }
-            }catch (IOException e){
-                e.printStackTrace();
-                Logger.logE(String.format("IOException: %s. Invalidating adaptor for %s.", e.getMessage(), remoteDevAddress));
-                adaptor.getInterfaceController().registerRemoteDeliveryListener(remoteDevAddress, getChannelID(), null);
-                shutdown();
-                return;
             }
+        }
+
+        public void start() {
+            socketThread.addStream(this);
+            adaptor.getInterfaceController().registerRemoteDeliveryListener(remoteAddress, adaptor.getChannelID(), this);
+            if(!socketThread.isAlive()){
+                socketThread.start();
+            }
+            active = true;
+        }
+
+        public void interrupt(){
+            try {
+                invalidate();
+            } catch (IOException e) {
+                Logger.logE(e.getMessage());
+            }
+        }
+
+        private boolean flush() throws IOException {
+            int sent = 0;
+            while (getPipedInputStream().available() > 0){
+                getOutputStream().write(getPipedInputStream().read());
+                sent++;
+            }
+            return sent > 0;
         }
 
         @Override
         public boolean write(Packet pkt, boolean async) throws IOException {
-            if(errorState){
-                throw new IOException("Invalid write state.");
+            if(Thread.currentThread().equals(socketThread)){
+                //Avoid reading and writing from the same thread.
+                return false;
             }
-            if(!async){
-                return write(pkt);
+            byte data[] = toBytes(pkt);
+            if(data != null) {
+                getPipedOutputStream().write(data);
+                bytesOUT += data.length;
+                return true;
             }
-            boolean pktQueued = false, hasLock = false;
-            if(pkt != null) {
-                try{
-                    hasLock = outputQueueLock.tryLock(300, TimeUnit.MILLISECONDS);
-                    if(hasLock){
-                        pktQueued = outputQueue.offer(pkt);
-                    }
-                }catch (IllegalArgumentException e){
-                    throw new IOException(e);
-                } catch (InterruptedException e) {
+            return false;
+        }
 
-                }finally {
-                    if(hasLock){
-                        outputQueueLock.unlock();
-                    }
+        @Override
+        public void shutdown() {
+            try {
+                invalidate();
+            } catch (IOException e) {
+                Logger.logE(e.getMessage());
+            }
+        }
+
+        public boolean write(Packet pkt) throws IOException {
+            if(Thread.currentThread().equals(socketThread)){
+                //Only registered socket thread is expected to write to the stream.
+                return false;
+            }
+            if(pkt != null) {
+                byte data[] = toBytes(pkt);
+                if (data != null) {
+                    getOutputStream().write(data);
+                    bytesOUT += data.length;
+                    return true;
                 }
             }
-            return pktQueued;
+            return false;
+        }
+
+
+        public boolean isConnected(){
+            return active && socket.isConnected();
+        }
+
+        private void invalidate() throws IOException {
+            active = false;
+            adaptor.notifySocketException(remoteAddress);
+            socketThread.removeStream(remoteAddress);
+            socket.getInputStream().close();
+            socket.getOutputStream().close();
+            socket.close();
+        }
+
+        private PipedOutputStream getPipedOutputStream() throws IOException {
+            if(pipedInputStream == null){
+                pipedInputStream = new PipedInputStream();
+                pipedOutputStream = new PipedOutputStream(pipedInputStream);
+            }
+            return pipedOutputStream;
+        }
+
+        private PipedInputStream getPipedInputStream() throws IOException {
+            if(pipedInputStream == null){
+                pipedInputStream = new PipedInputStream();
+                pipedOutputStream = new PipedOutputStream(pipedInputStream);
+            }
+            return pipedInputStream;
+        }
+
+        private OutputStream getOutputStream() throws IOException {
+            if(pipedInputStream == null){
+                pipedInputStream = new PipedInputStream();
+                pipedOutputStream = new PipedOutputStream(pipedInputStream);
+            }
+            return socket.getOutputStream();
+        }
+
+        @Override
+        protected int read(byte[] buffer, int max) throws IOException {
+            if(socket.getInputStream().available() >= max){
+                bytesIN++;
+                return socket.getInputStream().read(buffer);
+            }
+            return 0;
+        }
+
+        @Override
+        public String toString(){
+            return remoteAddress + (isConnected() ? "" : "(DISCONNECTED)" + "IN=" + bytesIN + "/OUT=" + bytesOUT);
+        }
+
+        @Override
+        public boolean equals(Object other){
+            return other != null && other instanceof Connection && ((Connection) other).remoteAddress.equals(remoteAddress);
+        }
+
+        @Override
+        public int hashCode(){
+            return remoteAddress.hashCode();
+        }
+    }
+
+    /**
+     * Thread for handling connections received from remote peers.
+     */
+    private final static class SocketThread extends Thread{
+
+        private static final int STREAM_REFRESH_INTERVAL = 100;
+        RemoteInterfaceAdaptor adaptor;
+        private volatile Map<String, Connection> connections;
+        private boolean errorState;
+        private long pktsIn = 0, pktsOut = 0, lastPktCount = -1;
+        private long stream_refresh_schedule = -1;
+        private long startTs, lastStatsLogTs;
+
+        /**
+         * Create an instance of the socket thread.
+         * @param adaptor The interface adaptor, a termination into the local end of the connection (through the {@link InterfaceController}).
+         */
+        private SocketThread(RemoteInterfaceAdaptor adaptor){
+            setDaemon(false);
+            this.adaptor = adaptor;
+            errorState = false;
+            startTs = SystemClock.uptimeMillis();
+            lastStatsLogTs = startTs;
+            connections = new ConcurrentHashMap<>();
+        }
+
+        @Override
+        public void run(){
+            long lastRefresh = Math.max(stream_refresh_schedule, SystemClock.elapsedRealtime());
+            errorState = !adaptor.isActive();
+            while (adaptor.isActive() && !errorState){
+                Iterator<Map.Entry<String, Connection>> iterator = connections.entrySet().iterator();
+                while(iterator.hasNext()) {
+                    Map.Entry<String, Connection> connectionEntry = iterator.next();
+                    if(!connectionEntry.getValue().isConnected()){
+                        continue;
+                    }
+                    Connection connection = connectionEntry.getValue();
+                    String remoteAddres = connectionEntry.getKey();
+                    try{
+                        Packet pkt = connection.readMultipartNext();
+                        if (pkt != null) {
+                            adaptor.getInterfaceController().receive(remoteAddres, pkt);
+                            pktsIn++;
+                            adaptor.getInterfaceController().registerRemoteDeliveryListener(remoteAddres, adaptor.getChannelID(), connection);
+                        }
+                        long curTs = SystemClock.elapsedRealtime();
+                        if (connection.flush()) {
+                            lastRefresh = curTs;
+                        } else if (stream_refresh_schedule < 0) {
+                            stream_refresh_schedule = curTs + STREAM_REFRESH_INTERVAL * 5;
+                        } else if (curTs > lastRefresh + STREAM_REFRESH_INTERVAL) {
+                            byte data[] = String.format("dev(%s).keepAlive(%d) @%d", remoteAddres, STREAM_REFRESH_INTERVAL, lastRefresh).getBytes();
+                            Packet keepAlivePkt = Packet.wrap(data);
+                            keepAlivePkt.setProtocol(Packet.PROTOCOL_PROXIMITY);
+                            write(keepAlivePkt, remoteAddres);
+                            lastRefresh = curTs;
+                        }
+                    }catch (IOException e){
+                        e.printStackTrace();
+                        Logger.logE(String.format("IOException: %s. Invalidating adaptor for %s.", e.getMessage(), remoteAddres));
+                        adaptor.getInterfaceController().registerRemoteDeliveryListener(remoteAddres, adaptor.getChannelID(), null);
+                        connection.shutdown();
+                        iterator.remove();
+                        return;
+                    }
+                }
+                if ((pktsIn + pktsOut) % 10 <= 2) {
+                    printStats();
+                }
+            }
+        }
+
+        private void addStream(Connection connection){
+            connections.put(connection.remoteAddress, connection);
+        }
+
+        private void removeStream(String remoteAddress){
+            connections.remove(remoteAddress);
         }
 
         private void printStats(){
             long tsDiff = (SystemClock.uptimeMillis() - startTs)/1000;
+            setName("Connections " + connections.keySet() + " @ [[ " + ThreadLifeMonitor.getNextAgeDescr("__", false, pktsIn, pktsOut) + " ]]");
             if(tsDiff == 0){
                 return;
             }
@@ -259,75 +365,15 @@ public abstract class RemoteInterfaceAdaptor{
                 return;
             }
             lastStatsLogTs = tsDiff;
-            Logger.logI(String.format("IN: %d pkts/s, OUT: %d pkts/s, queue_growth: %d/s, max_queue_reqs: %d/s, outQueueSize: %d", pktsIn/tsDiff, pktsOut/tsDiff, outputQueue.size()/tsDiff, (pktsOut+outputQueue.size())/tsDiff, outputQueue.size()));
         }
 
-        @Override
-        public void shutdown(){
-            adaptor.notifySocketException(btSocket.getRemoteDevice().getAddress());
-            try {
-                btSocket.getInputStream().close();
-                btSocket.getOutputStream().close();
-                btSocket.close();
-                errorState = true;
-                if(!(executorService.isShutdown() || executorService.isTerminated())){
-                    executorService.shutdownNow();
-                }
-            } catch (IOException e) {
-                Logger.logE(e.getMessage());
+        private boolean write(Packet pkt, String remoteAddress) throws IOException {
+            Connection connection = connections.get(remoteAddress);
+            if(pkt != null && connection != null) {
+                connection.write(pkt);
+                return true;
             }
-        }
-
-        private boolean write(Packet pkt) throws IOException {
-            submitWrite(pkt);
-            return true;
-        }
-
-
-        private void submitWrite(Packet pkt) throws IOException{
-            Future future = executorService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    try{
-                        outputStream.write(WireInterface.toBytes(pkt));
-                        outputStream.flush();
-                    }catch (IOException e){
-                        errorState = true;
-                    }
-                }
-            });
-            try {
-                future.get(500, TimeUnit.MILLISECONDS);
-            } catch (Exception e) {
-                Logger.logE("OutputStream STUCK? --- tearing connection down!");
-                future.cancel(true);
-                throw new IOException(e);
-            }
-        }
-
-        private boolean flushOutputQueue() throws IOException {
-            int sent = 0;
-            Packet pkt = null;
-            boolean hasLock = outputQueueLock.tryLock();
-            if(hasLock) {
-                try{
-                    if (outputQueue.peek() != null) {
-                        pkt = outputQueue.poll();
-                    }
-                }finally {
-                    outputQueueLock.unlock();
-                }
-            }
-            dummyState = WRITE_START;
-            if(pkt != null){
-                byte[] bytes = WireInterface.toBytes(pkt);
-                outputStream.write(bytes);
-                outputStream.flush();
-                sent++;
-                pktsOut++;
-            }
-            dummyState = WRITE_END;
-            return sent > 0;
+            return false;
         }
     }
 }

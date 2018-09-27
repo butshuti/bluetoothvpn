@@ -26,11 +26,12 @@ import edu.unt.nsllab.butshuti.bluetoothvpn.ui.custom_views.ClickableView;
 import edu.unt.nsllab.butshuti.bluetoothvpn.ui.fragments.ConnectivityGraphFragment;
 import edu.unt.nsllab.butshuti.bluetoothvpn.ui.fragments.NetworkStatusFragment;
 import edu.unt.nsllab.butshuti.bluetoothvpn.utils.Logger;
+import edu.unt.nsllab.butshuti.bluetoothvpn.vpn.BTVPNApplication;
 import edu.unt.nsllab.butshuti.bluetoothvpn.vpn.BTVpnService;
 
 import static edu.unt.nsllab.butshuti.bluetoothvpn.ui.PingTestActivity.ACTION_PING_TEST;
 import static edu.unt.nsllab.butshuti.bluetoothvpn.ui.PingTestActivity.EXTRA_KEY_HOSTNAME;
-import static edu.unt.nsllab.butshuti.bluetoothvpn.vpn.BTVpnService.BT_VPN_SERVICE_STARTED;
+import static edu.unt.nsllab.butshuti.bluetoothvpn.vpn.BTVPNApplication.BT_VPN_SERVICE_STARTED;
 
 /**
  * Created by butshuti on 5/17/18.
@@ -85,7 +86,7 @@ public class BluetoothVPNActivity extends AppCompatActivity{
     protected void onStop() {
         super.onStop();
         if(vpnService != null){
-            Repository.instance().removeDataSource(vpnService.getServiceStatusWrapper());
+            Repository.instance().removeDataSource(((BTVPNApplication)getApplication()).getServiceStatusWrapper());
         }
         unregisterReceiver(broadcastReceiver);
     }
@@ -205,7 +206,7 @@ public class BluetoothVPNActivity extends AppCompatActivity{
                 if(BT_VPN_SERVICE_STARTED.equals(action)){
                     vpnService = BTVpnService.getInstance();
                     if(vpnService != null){
-                        Repository.instance().addDataSource(vpnService.getServiceStatusWrapper());
+                        Repository.instance().addDataSource(((BTVPNApplication)getApplication()).getServiceStatusWrapper());
                     }
                 }
             }

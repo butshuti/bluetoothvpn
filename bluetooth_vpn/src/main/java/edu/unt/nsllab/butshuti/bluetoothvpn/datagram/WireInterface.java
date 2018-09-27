@@ -39,7 +39,7 @@ public abstract class WireInterface {
 
     protected abstract int read(byte buffer[], int max) throws IOException;
 
-    public synchronized Packet readMultipartNext() throws IOException {
+    public final synchronized Packet readMultipartNext() throws IOException {
         int size;
         byte preamble[];
         if(savedPreamble != null){
@@ -81,7 +81,7 @@ public abstract class WireInterface {
         return null;
     }
 
-    public static byte[] toBytes(Packet pkt){
+    public final static byte[] toBytes(Packet pkt){
         if(pkt != null){
             byte ret[] = new byte[pkt.getData().length + PREAMBLE_SIZE];
             ByteBuffer byteBuffer = ByteBuffer.wrap(ret);
@@ -101,11 +101,11 @@ public abstract class WireInterface {
         return new byte[]{};
     }
 
-    private static short calcPktPreambleXor(byte buf[]){
+    private final static short calcPktPreambleXor(byte buf[]){
         return calcBufXor(buf, PREAMBLE_SIZE - 4);
     }
 
-    private static short calcBufXor(byte buf[], int size){
+    private final static short calcBufXor(byte buf[], int size){
         if(buf == null || buf.length < size){
             return -1;
         }

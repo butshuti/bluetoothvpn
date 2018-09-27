@@ -278,12 +278,12 @@ public class InterfaceController {
                return false;
             }
             pkt.touchTTL();
-            if(!sendDirect(pkt, dst, false)){
+            if(!sendDirect(pkt, dst, true)){
                 //Destination is not an adjacent host, find indirect route if any
                 InternetLayerHeaders.AddressHeaders headers = InternetLayerHeaders.parseInetAddr(pkt.getData());
                 dst = LocalInterfaceBridge.getRoute(headers.getTo());
                 if(dst != null){
-                    return sendDirect(pkt, dst, false);
+                    return sendDirect(pkt, dst, true);
                 }
                 Logger.logE(String.format("No <<forwarding>> route for outgoing packet: %s => %s", pkt.getSrcBDAddrStr(), pkt.getDstBDAddrStr()) + ":: " + headers.getFrom() + "=>" + headers.getTo());
             }
@@ -383,7 +383,7 @@ public class InterfaceController {
             return false;
         }
         Packet resp = pkt.resp(pkt.getData()).touchTTL();
-        boolean ret = sendDirect(resp, remoteDevAddress, false);
+        boolean ret = sendDirect(resp, remoteDevAddress, true);
         if(forwardingServiceEnabled()){
             for(String target : LocalInterfaceBridge.getRoutes()){
                 if(target.equals(remoteDevAddress)){
@@ -391,7 +391,7 @@ public class InterfaceController {
                 }
                 Packet routeAdvPacket = Packet.copy(resp);
                 routeAdvPacket.updateSrcBTAddr(target);
-                sendDirect(routeAdvPacket, remoteDevAddress, false);
+                sendDirect(routeAdvPacket, remoteDevAddress, true);
             }
         }
         return ret;

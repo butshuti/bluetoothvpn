@@ -23,7 +23,7 @@ public class BluetoothSocketWrappers {
     private final static boolean REVERSE_CONNECT = false;
     private static int SELECTED_CHANNEL_IDX = 0;
     private static final int CLIENT_SOCKET_POLL_INDEX = 20;
-    private static final int CONNECTION_WAIT_TIMEOUT = 3000;
+    private static final int CONNECTION_WAIT_TIMEOUT = -3000;
     private static final int REVERSE_CONNECT_WAIT_INTERVAL = 1000;
     private static final boolean FORCE_DEFAULT_SECURE = false;
 
@@ -59,7 +59,7 @@ public class BluetoothSocketWrappers {
             if(nextChannel != null){
                 BluetoothSocket socket;
                 try {
-                    socket = manageConnection(nextChannel.accept(CONNECTION_WAIT_TIMEOUT/MAX_NUM_CHANNELS));
+                    socket = manageConnection(nextChannel.accept());//CONNECTION_WAIT_TIMEOUT/MAX_NUM_CHANNELS));
                 }catch (IOException e){
                     return null;
                 }
@@ -180,6 +180,7 @@ public class BluetoothSocketWrappers {
                             lastConnectedSocket = null;
                         }catch (IOException e){
                             //Ignore exception, remote peer may already have disconnected
+                            lastConnectedSocket = null;
                         }
                     }
                     BluetoothSocket ret;
