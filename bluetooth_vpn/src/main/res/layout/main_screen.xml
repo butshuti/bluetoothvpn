@@ -18,14 +18,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="start|bottom"
-        android:src="@android:drawable/ic_menu_edit"
+        android:src="@android:drawable/ic_menu_manage"
         android:layout_margin="16dp" />
 
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/sync_fab"
+        android:id="@+id/activate_vpn_fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end|bottom"
-        android:src="@android:drawable/ic_popup_sync"
+        android:src="@drawable/ic_vpn_fab_icon"
         android:layout_margin="16dp" />
 </FrameLayout>

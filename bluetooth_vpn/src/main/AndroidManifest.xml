@@ -24,7 +24,7 @@
 
         <activity
             android:name="edu.unt.nsllab.butshuti.bluetoothvpn.ui.BluetoothVPNActivity"
-            android:icon="@android:drawable/stat_sys_data_bluetooth"
+            android:icon="@mipmap/ic_launcher"
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -36,6 +36,7 @@
             android:name="edu.unt.nsllab.butshuti.bluetoothvpn.ui.ReachabilityTestActivity"
             android:exported="true"
             android:clearTaskOnLaunch="true"
+            android:finishOnTaskLaunch="true"
             android:label="Reachability Test"
             android:theme="@style/DialogTheme">
             <intent-filter>
@@ -45,7 +46,7 @@
         <activity
             android:name=".ui.ServiceLocatorActivity"
             android:exported="true"
-            android:icon="@android:drawable/stat_sys_data_bluetooth"
+            android:icon="@mipmap/ic_launcher"
             android:label="Bluetooth Service Locator"
             android:permission="android.permission.BLUETOOTH_ADMIN"
             android:theme="@style/DialogTheme">
