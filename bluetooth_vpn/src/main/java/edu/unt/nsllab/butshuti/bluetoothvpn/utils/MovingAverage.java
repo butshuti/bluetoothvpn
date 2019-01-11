@@ -1,7 +1,7 @@
 package edu.unt.nsllab.butshuti.bluetoothvpn.utils;
 
 /**
- * Created by butshuti on 1/18/16.
+ * Created by butshuti on 1/18/18.
  */
 
 public class MovingAverage {

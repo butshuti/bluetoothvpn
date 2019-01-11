@@ -4,6 +4,7 @@ import edu.unt.nsllab.butshuti.bluetoothvpn.utils.Logger;
 
 /**
  * Created by butshuti on 9/10/18.
+ *
  */
 final class EchoDataParcel {
     static final int MAX_SIZE = 256;

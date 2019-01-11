@@ -78,20 +78,20 @@ public class PingTestResultsFragment extends Fragment implements Observer<Reacha
             serviceAddress = "N/A";
         }
         double probeSuccess = Math.round(100.0*results.getNumProbes() / results.getNumRequestedProbes());
-        String meanRTTStr = results.getAvgRTT() > 0.0 ? String.valueOf(results.getAvgRTT()) + " ms" : "INF";
+        String meanRTTStr = results.getAvgRTT() > 0.0 ? String.valueOf(results.getAvgRTT()) + " ms" : "---";
         String RTTRangeStr = String.format("[%.1f , %.1f]", resultsCDF.getMin(), resultsCDF.getMax());
         //The following are 'rows' to dynamically embed in the results view.
         LinearLayout svcAddrLine = getDetailLine("Network Address", serviceAddress);
         LinearLayout resultLine = getDetailLine("Discovery result", results.getStatus().getExpl());
         LinearLayout discoveryModeLine = getDetailLine("Discovery Mode", results.getDiscoveryMode());
         LinearLayout successRatioLine = getDetailLine("Successful probes", probeSuccess + " %");
-        LinearLayout hopsLine = getDetailLine("Number of hops", String.valueOf(results.getNumHops()));
+        LinearLayout hopsLine = getDetailLine("Number of hops", String.valueOf(results.getNumHops()) + "*");
         LinearLayout pktSizeLine = getDetailLine("Packet size", String.valueOf(results.getPacketSize()));
-        LinearLayout timeoutLine = getDetailLine(" Configured Timeout", String.valueOf(results.getConfiguredTimeout()) + " ms");
-        LinearLayout meanRTTLine = getDetailLine(" Average RTT", meanRTTStr);
-        LinearLayout modeRTTLine = getDetailLine(" RTT Range", RTTRangeStr);
-        LinearLayout durationLine = getDetailLine(" Duration", String.valueOf(results.getDurationSeconds()) + " sec");
-        LinearLayout numAttemptsLine = getDetailLine(" Number of attempts", String.valueOf(results.getNumAttempts()));
+        LinearLayout timeoutLine = getDetailLine("Configured Timeout", String.valueOf(results.getConfiguredTimeout()) + " ms");
+        LinearLayout meanRTTLine = getDetailLine("Average RTT", meanRTTStr);
+        LinearLayout modeRTTLine = getDetailLine("RTT Range", RTTRangeStr);
+        LinearLayout durationLine = getDetailLine("Duration", String.valueOf(results.getDurationSeconds()) + " sec");
+        LinearLayout numAttemptsLine = getDetailLine("Number of attempts", String.valueOf(results.getNumAttempts()));
         LinearLayout resultsView = (LinearLayout)this.view.findViewById(R.id.sd_results_details);
         if(probeSuccess < 25){
             successRatioLine.setBackgroundColor(Color.RED);

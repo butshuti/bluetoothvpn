@@ -1,6 +1,8 @@
 package edu.unt.nsllab.butshuti.bluetoothvpn.iptools.sdquery;
 
 /**
+ * Created by butshuti on 9/10/18.
+ *
  * This class implements a graceful scheduler for service discovery tasks.
  * It adjusts the number of probes and timeout parameters taking into account the nature of observed failures.
  * Considered conditions include network status and the frequency of discovery attempts.

@@ -16,7 +16,9 @@ public class Packet {
     public static final byte PROTOCOL_DATA = 0x0D;
     public static final byte PROTOCOL_ITEST = 0x02;
     public static final byte PROTOCOL_PROXIMITY = 0x03;
-    public static final byte PROTOCOL_TRACEROUTE = 0x04;
+    public static final byte PROTOCOL_PROXIMITY_ACK = 0x04;
+    public static final byte PROTOCOL_PATH_PROPAGATION = 0x05;
+    public static final byte PROTOCOL_TRACEROUTE = 0x06;
 
     private static final byte DEFAULT_TTL = (byte)64;
 
@@ -80,7 +82,11 @@ public class Packet {
     }
 
     public Packet touchTTL(){
-        ttl -= 1;
+        if(protocol == PROTOCOL_PROXIMITY || protocol == PROTOCOL_PROXIMITY_ACK || protocol == PROTOCOL_PATH_PROPAGATION){
+            ttl = 1;
+        }else {
+            ttl -= 1;
+        }
         return this;
     }
 

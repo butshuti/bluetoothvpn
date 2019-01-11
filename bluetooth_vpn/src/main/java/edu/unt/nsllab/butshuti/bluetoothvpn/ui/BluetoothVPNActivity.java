@@ -44,14 +44,13 @@ public class BluetoothVPNActivity extends AppCompatActivity{
     public static final int VPN_START_REQUEST_CODE = 0x88;
 
     private BTVpnService vpnService = null;
-    private FloatingActionButton syncFab;
+    private FloatingActionButton configFab, activateVpnFab;
     private ViewPager viewPager;
     private TabLayout tabs;
     private TabPageAdapter pagerAdapter;
     private DrawerLayout drawerLayout;
     private NavigationView navigationView;
     private BroadcastReceiver broadcastReceiver;
-
 
     @Override
     public void onCreate(Bundle savedInstanceState){
@@ -65,7 +64,8 @@ public class BluetoothVPNActivity extends AppCompatActivity{
         drawerLayout = findViewById(R.id.drawer_layout);
         viewPager.setAdapter(pagerAdapter);
         tabs.setupWithViewPager(viewPager);
-        syncFab = findViewById(R.id.sync_fab);
+        configFab = findViewById(R.id.config_fab);
+        activateVpnFab = findViewById(R.id.activate_vpn_fab);
         prepareToolbar();
         registerViewClickHandlers();
     }
@@ -73,13 +73,13 @@ public class BluetoothVPNActivity extends AppCompatActivity{
     @Override
     public void onResume(){
         super.onResume();
-        startVPNService();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         registerReceiver(broadcastReceiver, new IntentFilter(BT_VPN_SERVICE_STARTED));
+        startVPNService();
     }
 
     @Override
@@ -95,8 +95,11 @@ public class BluetoothVPNActivity extends AppCompatActivity{
     public void onActivityResult(int requestCode, int resultCode, Intent intent){
         if(requestCode == VPN_START_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
-                Logger.logI("VPN-- on!!!!");
                 startService(new Intent(this, BTVpnService.class));
+                activateVpnFab.setVisibility(View.INVISIBLE);
+            }else{
+                stopService(new Intent(this, BTVpnService.class));
+                activateVpnFab.setVisibility(View.VISIBLE);
             }
         }
     }
@@ -119,10 +122,6 @@ public class BluetoothVPNActivity extends AppCompatActivity{
         }
         vpnService = BTVpnService.getInstance();
         return vpnService != null;
-    }
-
-    private void stopVPNService(){
-        stopService(new Intent(this, BTVpnService.class));
     }
 
     private void prepareToolbar(){
@@ -161,7 +160,9 @@ public class BluetoothVPNActivity extends AppCompatActivity{
             drawerLayout.closeDrawers();
             return true;
         });
-        //syncFab.setOnClickListener(view -> runReachabilityTest());
+        configFab.setOnClickListener(v -> launchNetworkConfiguration());
+        activateVpnFab.setOnClickListener(v -> startVPNService());
+        activateVpnFab.setVisibility(View.INVISIBLE);
     }
 
     private void configurePeers(){

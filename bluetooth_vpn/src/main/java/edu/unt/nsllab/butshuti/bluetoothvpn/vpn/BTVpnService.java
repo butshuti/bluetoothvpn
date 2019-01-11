@@ -3,9 +3,12 @@ package edu.unt.nsllab.butshuti.bluetoothvpn.vpn;
 import android.content.Intent;
 import android.net.VpnService;
 
+import edu.unt.nsllab.butshuti.bluetoothvpn.tunnel.VPNFDController;
+
 public class BTVpnService extends VpnService {
 
     public static BTVpnService instance = null;
+    private VPNFDController vpnfdController;
 
     @Override
     public void onCreate() {
@@ -22,15 +25,26 @@ public class BTVpnService extends VpnService {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        stopSelf();
     }
 
     private void prepare(){
-        ((BTVPNApplication)getApplication()).prepare(new Builder());
+        vpnfdController = ((BTVPNApplication)getApplication()).prepare(new Builder());
     }
 
     public static BTVpnService getInstance(){
         return instance;
+    }
+
+    public boolean isActive(){
+        return vpnfdController != null;
+    }
+
+    @Override
+    public void onRevoke(){
+        if(vpnfdController != null){
+            vpnfdController.terminate();
+        }
+        stopSelf();
     }
 
 }

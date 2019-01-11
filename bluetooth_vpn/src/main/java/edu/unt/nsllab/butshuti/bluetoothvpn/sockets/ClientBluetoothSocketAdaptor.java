@@ -11,7 +11,7 @@ import edu.unt.nsllab.butshuti.bluetoothvpn.tunnel.RemoteInterfaceAdaptor;
 import edu.unt.nsllab.butshuti.bluetoothvpn.utils.Logger;
 
 /**
- * Created by butshuti on 12/20/17.
+ * Created by butshuti on 5/17/18.
  *
  * A client implementation of the {@link RemoteInterfaceAdaptor}.
  * Client adaptors are basic in the fact that they maintain a connection to exactly one server at a time.

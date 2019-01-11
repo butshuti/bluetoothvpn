@@ -1,5 +1,8 @@
 package edu.unt.nsllab.butshuti.bluetoothvpn.tunnel;
 
+import android.os.Handler;
+import android.os.Message;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -8,10 +11,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import edu.unt.nsllab.butshuti.bluetoothvpn.utils.net_protocols.AddressConversions;
-import edu.unt.nsllab.butshuti.bluetoothvpn.utils.net_protocols.InternetLayerHeaders;
 import edu.unt.nsllab.butshuti.bluetoothvpn.datagram.Packet;
 import edu.unt.nsllab.butshuti.bluetoothvpn.utils.Logger;
+import edu.unt.nsllab.butshuti.bluetoothvpn.utils.net_protocols.AddressConversions;
+import edu.unt.nsllab.butshuti.bluetoothvpn.utils.net_protocols.InternetLayerHeaders;
 
 /**
  *An interface for multiplexing and demultiplexing local connections on the external-facing bridge.
@@ -19,10 +22,19 @@ import edu.unt.nsllab.butshuti.bluetoothvpn.utils.Logger;
  * Internal-facing sockets are identified by assigned connection tags.
  * This is implemented to maintain a single socket to a remote device.
  *
- * Created by butshuti on 12/20/17.
+ * Created by butshuti on 5/17/18.
  */
 
-public class InterfaceController {
+public class InterfaceController{
+    public static class NetworkEvent {
+        String remoteAddress;
+        Packet pkt;
+        NetworkEvent(String remoteAddress, Packet pkt){
+            this.remoteAddress = remoteAddress;
+            this.pkt = pkt;
+        }
+    }
+
     public interface NetworkEventListener{
         void notifyIrrecoverableException(String channelID, String remotePeerAddress);
         void onNewConnection(String channelID, String remotePeerAddress);
@@ -35,12 +47,34 @@ public class InterfaceController {
     public interface RemoteDatagramDeliveryListener{
         boolean write(Packet pkt, boolean async) throws IOException;
         void shutdown();
+        boolean isPrimary();
     }
 
     public interface InterfaceConfigurationView{
         String getLocalBDAddr();
         String getInterfaceAddress();
         void updateLocalBDAddr(String addr);
+    }
+
+    private final class RemoteDatagramForwardingListener implements RemoteDatagramDeliveryListener {
+        private RemoteDatagramDeliveryListener listener;
+        private RemoteDatagramForwardingListener(RemoteDatagramDeliveryListener listener){
+            this.listener = listener;
+        }
+        @Override
+        public boolean write(Packet pkt, boolean async) throws IOException {
+            return listener.write(pkt, async);
+        }
+
+        @Override
+        public void shutdown() {
+
+        }
+
+        @Override
+        public boolean isPrimary() {
+            return false;
+        }
     }
 
     public static final int DEFAULT_RECEIVE_TIMEOUT_MS = 300;
@@ -50,13 +84,22 @@ public class InterfaceController {
     private List<NetworkEventListener> eventListeners = new ArrayList<>(); //Event listeners for socket events (mainly exceptions).
     private InterfaceConfigurationView interfaceConfigurationView;
     private boolean active = true; //controller is active
-    private boolean mirroringEnabled = true; // Intercept relayed packets to process/mirror them locally.
     private int timeout = DEFAULT_RECEIVE_TIMEOUT_MS;
     private static InterfaceController instance = null;
-    private boolean echoPending = true, enableForwarding = true;
+    private boolean echoPending = true, enableRouting = true;
+    private Handler handler;
 
     private InterfaceController(InterfaceConfigurationView interfaceConfigurationView){
         this.interfaceConfigurationView = interfaceConfigurationView;
+        handler = new Handler(){
+            @Override
+            public void handleMessage(Message msg) {
+                if(msg.obj instanceof NetworkEvent){
+                    NetworkEvent event = (NetworkEvent) msg.obj;
+                    InterfaceController.this.process(event.remoteAddress, event.pkt);
+                }
+            }
+        };
         instance = this;
     }
 
@@ -109,10 +152,23 @@ public class InterfaceController {
         }
     }
 
+    private boolean isEchoPkt(Packet pkt){
+        if(pkt != null) {
+            return pkt.getProtocol() == Packet.PROTOCOL_PROXIMITY || pkt.getProtocol() == Packet.PROTOCOL_PROXIMITY_ACK;
+        }
+        return false;
+    }
 
-    private boolean isEchoTest(Packet pkt){
+    private boolean isEchoRequestPkt(Packet pkt){
         if(pkt != null) {
             return pkt.getProtocol() == Packet.PROTOCOL_PROXIMITY;
+        }
+        return false;
+    }
+
+    private boolean isDataPkt(Packet pkt){
+        if(pkt != null) {
+            return pkt.getProtocol() == Packet.PROTOCOL_DATA;
         }
         return false;
     }
@@ -124,16 +180,15 @@ public class InterfaceController {
         return false;
     }
 
+    private boolean isPathPropagation(Packet pkt){
+        if(pkt != null){
+            return pkt.getProtocol() == Packet.PROTOCOL_PATH_PROPAGATION;
+        }
+        return false;
+    }
+
     public boolean forwardingServiceEnabled(){
-        return enableForwarding;
-    }
-
-    public boolean isMirroringEnabled(){
-        return mirroringEnabled;
-    }
-
-    public void enableRelayInterception(boolean enable){
-        mirroringEnabled = enable;
+        return enableRouting;
     }
 
 
@@ -149,10 +204,10 @@ public class InterfaceController {
 
     /**
      * Make this interface a forwarder.
-     * @param enableForwarding
+     * @param enableRouting
      */
-    public void setEnableForwarding(boolean enableForwarding){
-        this.enableForwarding = enableForwarding;
+    public void setEnableRouting(boolean enableRouting){
+        this.enableRouting = enableRouting;
     }
 
     /**
@@ -178,8 +233,10 @@ public class InterfaceController {
     public void registerRemoteDeliveryListener(String remoteAddress, String channelID, RemoteDatagramDeliveryListener listener){
         Logger.logE("Registering remote delivery listener for " + remoteAddress + ": " + listener);
         if(listener != null){
-            remoteDatagramDeliveryMap.put(remoteAddress, listener);
-            outputChannels.put(remoteAddress, channelID);
+            if(listener.isPrimary() || !remoteDatagramDeliveryMap.containsKey(remoteAddress) || !remoteDatagramDeliveryMap.get(remoteAddress).isPrimary()){
+                remoteDatagramDeliveryMap.put(remoteAddress, listener);
+                outputChannels.put(remoteAddress, channelID);
+            }
         }else if(remoteDatagramDeliveryMap.containsKey(remoteAddress)){
             remoteDatagramDeliveryMap.remove(remoteAddress);
             outputChannels.remove(remoteAddress);
@@ -222,6 +279,13 @@ public class InterfaceController {
      * </p>
      */
     public boolean receive(String remoteDevice, Packet pkt){
+        Message msg = Message.obtain();
+        msg.obj= new NetworkEvent(remoteDevice, pkt);
+        handler.sendMessage(msg);
+        return true;
+    }
+
+    private boolean process(String remoteDevice, Packet pkt){
         boolean success = false;
         if(pkt != null && pkt.getTtl() > 0){
             try{
@@ -231,30 +295,34 @@ public class InterfaceController {
                     //If it is already set, this may be a multihop routing, so preserve the preset address
                     pkt.updateSrcBTAddr(remoteDevice);
                 }else if(!pkt.getSrcBDAddrStr().equals(remoteDevice)){
-                    //Update route to original peer through the current peer
-                    LocalInterfaceBridge.addProximity(pkt.getSrcBDAddrStr(), remoteDevice);
+                    //Update route to original peer
+                    LocalInterfaceBridge.addProximity(pkt.getSrcBDAddrStr(), pkt.getSrcBDAddrStr());
                 }
-                if(isEchoTest(pkt)){
+                if(isPathPropagation(pkt)){
+                    Logger.logI("Path propagation pkt: self->" + remoteDevice + "->" + pkt.getSrcBDAddrStr());
+                }
+                if(isEchoPkt(pkt)){
                     //Echo tests never cross the controller, they are for troubleshooting purposes only.
                     if(interfaceConfigurationView.getLocalBDAddr() == null && echoPending){
                         if(!Packet.NULL_BD_ADDR_STR.equals(pkt.getDstBDAddrStr())){
                             interfaceConfigurationView.updateLocalBDAddr(pkt.getDstBDAddrStr());
                         }
                     }
-                    return sendEchoResponse(remoteDevice, pkt);
-                }else if(forwardingServiceEnabled() || !isLocalBDAddr(pkt.getDstBDAddrStr())){
+                    return isEchoRequestPkt(pkt) ? sendEchoResponse(remoteDevice, pkt) : true;
+                }else if(forwardingServiceEnabled() && !isLocalBDAddr(pkt.getDstBDAddrStr())){
                     success = forward(pkt, remoteDevice);
                 }
                 String srcDevAddress = pkt.getSrcBDAddrStr();
                 if(!Packet.isValidBDAddr(srcDevAddress)){
                     srcDevAddress = remoteDevice;
                 }
-                if(srcDevAddress != null && remoteDatagramDeliveryMap.containsKey(remoteDevice)){
+                if(srcDevAddress != null && !srcDevAddress.equals(remoteDevice) && remoteDatagramDeliveryMap.containsKey(remoteDevice)){
                     //Mark the sender as a relay/gateway for the source address in the packet, so the sender will act as an intermediary to the source.
-                    registerRemoteDeliveryListener(srcDevAddress, outputChannels.get(remoteDevice), remoteDatagramDeliveryMap.get(remoteDevice));
+                    RemoteDatagramDeliveryListener gateway = new RemoteDatagramForwardingListener(remoteDatagramDeliveryMap.get(remoteDevice));
+                    registerRemoteDeliveryListener(srcDevAddress, outputChannels.get(remoteDevice), gateway);
                 }
-                Logger.logI(remoteDevice + " ->IN: /" + pkt.getSrcBDAddrStr() + pkt.getDstBDAddrStr());
-                if(isMirroringEnabled() || !forwardingServiceEnabled() || isLocalBDAddr(pkt.getDstBDAddrStr())){
+                Logger.logI(remoteDevice + " ->IN: /" + pkt.getSrcBDAddrStr() + " => " + pkt.getDstBDAddrStr());
+                if(isDataPkt(pkt) && isLocalBDAddr(pkt.getDstBDAddrStr())){
                     //If forwarding is enabled, just forward and forget packets unless interception is enabled (This is similar to just routing for other peers).
                     //If interception is enabled, deliver each packet locally in addition to forwarding it (This is similar to mirroring a session to a remote peer).
                     if(localDatagramDeliveryListener != null) {
@@ -278,11 +346,11 @@ public class InterfaceController {
                return false;
             }
             pkt.touchTTL();
-            if(!sendDirect(pkt, dst, true)){
+            if(!sendDirect(pkt, dst, true)) {
                 //Destination is not an adjacent host, find indirect route if any
                 InternetLayerHeaders.AddressHeaders headers = InternetLayerHeaders.parseInetAddr(pkt.getData());
                 dst = LocalInterfaceBridge.getRoute(headers.getTo());
-                if(dst != null){
+                if (dst != null) {
                     return sendDirect(pkt, dst, true);
                 }
                 Logger.logE(String.format("No <<forwarding>> route for outgoing packet: %s => %s", pkt.getSrcBDAddrStr(), pkt.getDstBDAddrStr()) + ":: " + headers.getFrom() + "=>" + headers.getTo());
@@ -361,12 +429,12 @@ public class InterfaceController {
     }
 
     public void pingProximities(){
-        /*byte data[] = new byte[InternetLayerHeaders.MIN_IP_PACKET_SIZE];
+        byte data[] = new byte[InternetLayerHeaders.MIN_IP_PACKET_SIZE];
         Packet pkt = Packet.wrap(data);
         pkt.setProtocol(Packet.PROTOCOL_PROXIMITY);
         for(String peer : LocalInterfaceBridge.getRoutes()){
-            sendDirect(pkt, peer);
-        }*/
+            sendDirect(pkt, peer, true);
+        }
     }
 
     /**
@@ -383,6 +451,7 @@ public class InterfaceController {
             return false;
         }
         Packet resp = pkt.resp(pkt.getData()).touchTTL();
+        resp.setProtocol(Packet.PROTOCOL_PROXIMITY_ACK);
         boolean ret = sendDirect(resp, remoteDevAddress, true);
         if(forwardingServiceEnabled()){
             for(String target : LocalInterfaceBridge.getRoutes()){
@@ -391,6 +460,7 @@ public class InterfaceController {
                 }
                 Packet routeAdvPacket = Packet.copy(resp);
                 routeAdvPacket.updateSrcBTAddr(target);
+                routeAdvPacket.setProtocol(Packet.PROTOCOL_PATH_PROPAGATION);
                 sendDirect(routeAdvPacket, remoteDevAddress, true);
             }
         }

@@ -11,7 +11,7 @@ import edu.unt.nsllab.butshuti.bluetoothvpn.utils.Logger;
 import edu.unt.nsllab.butshuti.bluetoothvpn.utils.net_protocols.NetUtils;
 
 /**
- * Created by butshuti on 12/20/17.
+ * Created by butshuti on 5/17/18.
  *
  * This class implements a bridge between local application sockets and the interface controller.
  * If multiple TCP/IP-like connections are opened to a remote peer, they will terminate locally into this bridge.

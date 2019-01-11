@@ -12,6 +12,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
+import android.graphics.drawable.Icon;
 import android.net.VpnService;
 import android.os.ParcelFileDescriptor;
 
@@ -85,6 +86,7 @@ public class BTVPNApplication extends Application implements InterfaceController
     public static final String BT_SERVICE_CURRENT_SD_CONFIG = "bt_service_locator_current_config";
     public static final String BT_VPN_SERVICE_STARTED = "bt_vpn_service_started";
     public static final int STATUS_UPDATE_EXPIRATION = 3000 ;
+    public static final long MAX_PKT_COUNT = 30000;
     public static final int MTU = 512;
     private final MutableLiveData<ServiceStatusWrapper> serviceStatusWrapper = new MutableLiveData<>();
 
@@ -105,6 +107,7 @@ public class BTVPNApplication extends Application implements InterfaceController
     private SDConfig sdConfig;
     private VpnService.Builder vpnServiceBuilder;
     private GlobalExecutorService.TaskWrapper serverThread;
+    private long pktCount = 0;
 
     private InterfaceConfigMode interfaceConfigMode = InterfaceConfigMode.NONE;
 
@@ -189,6 +192,10 @@ public class BTVPNApplication extends Application implements InterfaceController
     @Override
     public boolean deliver(Packet pkt) {
         if(VPNFDController != null){
+            pktCount++;
+            if(pktCount >= MAX_PKT_COUNT){
+                pktCount = 0;
+            }
             return VPNFDController.deliver(pkt.getData());
         }
         return false;
@@ -239,10 +246,10 @@ public class BTVPNApplication extends Application implements InterfaceController
         }
     }
 
-    void prepare(VpnService.Builder builder){
+    VPNFDController prepare(VpnService.Builder builder){
         if(builder == null){
             Logger.logE("Error: VPN service builder is null");
-            return;
+            return null;
         }
         vpnServiceBuilder = builder;
         refreshNetConfig();
@@ -294,6 +301,7 @@ public class BTVPNApplication extends Application implements InterfaceController
         }
         serviceStatusWrapper.postValue(serviceStatus);
         updateServiceStatusDescription();
+        return VPNFDController;
     }
 
     public MutableLiveData<ServiceStatusWrapper> getServiceStatusWrapper() {
@@ -409,6 +417,12 @@ public class BTVPNApplication extends Application implements InterfaceController
         ServiceStatusWrapper ssw = new ServiceStatusWrapper();
         ssw.setHostName(getLocalBDAddr());
         ssw.setInterfaceAddress(getInterfaceAddress());
+        ssw.setPktCount(pktCount);
+        if(serverModeEnabled()){
+            ssw.setStatus(getInterfaceAddress() != null ? Peer.Status.CONNECTED : Peer.Status.DISCONNECTED);
+        }else{
+            ssw.setStatus(clientState == CONNECTED ? Peer.Status.CONNECTED : clientState == CONNECTING ? Peer.Status.CONNECTING : Peer.Status.DISCONNECTED);
+        }
         Set<Peer> peers = new HashSet<>();
         NetUtils.AddrConfig config = NetUtils.getLocalBTReservedIfaceConfig();
         if(serverBluetoothSockerAdaptor != null){
@@ -486,7 +500,6 @@ public class BTVPNApplication extends Application implements InterfaceController
     }
 
     private boolean updateClientState(ClientState newState){
-        Logger.logI("Change clientState: " + clientState.name() + " => " + newState.name());
         clientState = newState;
         notifyProvisionaryState(clientState, false);
         return true;
@@ -808,6 +821,7 @@ public class BTVPNApplication extends Application implements InterfaceController
     private void notifyProvisionaryState(ClientState state, boolean newSession) {
         Logger.logI(String.format("Provisionary state: %s, new session: %s", state, newSession ? "Yes" : "No"));
         showNotification(state.name(), false);
+        updateServiceStatusDescription();
     }
 
     private String getConfiguredPeerName(){
@@ -850,22 +864,18 @@ public class BTVPNApplication extends Application implements InterfaceController
         Class<?> cls = BluetoothVPNActivity.class;
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
                 new Intent(this, cls), 0);
-        Intent stopServiceIntent =  new Intent(this, cls).setAction(getString(R.string.action_vpn_stop_service));
         Intent networkStatusServiceIntent =  new Intent(this, cls).setAction(getString(R.string.action_vpn_show_status));
-        PendingIntent stopServicePendingIntent = PendingIntent.getActivity(this, 0, stopServiceIntent, 0);
         PendingIntent networkStatusPendingIntent = PendingIntent.getActivity(this, 0, networkStatusServiceIntent, 0);
-        Notification.Action stopServiceAction = new Notification.Action.Builder(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopServicePendingIntent).build();
-        Notification.Action networkStatusAction = new Notification.Action.Builder(android.R.drawable.ic_menu_manage, "View", networkStatusPendingIntent).build();
+        Notification.Action networkStatusAction = new Notification.Action.Builder(android.R.drawable.ic_menu_manage, "View Connections", networkStatusPendingIntent).build();
         // Set the info for the views that show in the notification panel.
         Notification notification = new Notification.Builder(this)
-                .setSmallIcon(android.R.drawable.presence_online)
+                .setSmallIcon(R.drawable.ic_vpn_icon)
                 .setTicker(text)
                 .setWhen(System.currentTimeMillis())
                 .setContentTitle("Bluetooth VPN")
                 .setContentText(text)
                 .setContentIntent(contentIntent)
                 .addAction(networkStatusAction)
-                .addAction(stopServiceAction)
                 .setOngoing(true)
                 .setColor(failureState ? Color.RED : Color.GREEN)
                 .build();

@@ -72,16 +72,18 @@ public class VPNFDController {
     }
 
     public void terminate(){
+        interfaceController.deactivate();
+        readerThread.interrupt();
+        writerThread.interrupt();
         if(fd != null){
             try {
                 fd.close();
+                fd = null;
             } catch (IOException e) {
                 Logger.logE(e.getMessage());
             }
         }
         active = false;
-        readerThread.interrupt();
-        writerThread.interrupt();
     }
 
     private Thread createWriter(FileOutputStream fos){

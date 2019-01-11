@@ -22,6 +22,8 @@ import static edu.unt.nsllab.butshuti.bluetoothvpn.iptools.sdquery.PingSuite.sys
 
 
 /**
+ * Created by butshuti on 9/10/18.
+ *
  * This class implements a service discovery executor.
  * <p>
  *     Exactly one instance of {@link SDQueryExecutor} will exist per application instance (servicing all activities and services).

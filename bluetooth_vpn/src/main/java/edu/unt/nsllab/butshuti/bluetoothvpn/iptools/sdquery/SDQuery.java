@@ -13,7 +13,7 @@ import static edu.unt.nsllab.butshuti.bluetoothvpn.iptools.sdquery.SDQuery.SDQue
 
 
 /**
- * @author butshuti
+ * Created by butshuti on 9/10/18.
  *
  * An {@link SDQuery} instance represents a batch of probes in the same SD request.
  * Instances of this classes hold a reference to an {@link SDQueryHandler} for posting progress

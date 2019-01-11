@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
@@ -21,7 +19,7 @@ import edu.unt.nsllab.butshuti.bluetoothvpn.utils.Logger;
 import edu.unt.nsllab.butshuti.bluetoothvpn.utils.ThreadLifeMonitor;
 
 /**
- * Created by butshuti on 12/20/17.
+ * Created by butshuti on 5/17/18.
  *
  * Abstract socket wrapper for BT-to-BT connections.
  * This wrapper will extends locally though an {@link InterfaceController}.
@@ -195,8 +193,13 @@ public abstract class RemoteInterfaceAdaptor{
             }
         }
 
-        public boolean write(Packet pkt) throws IOException {
-            if(Thread.currentThread().equals(socketThread)){
+        @Override
+        public boolean isPrimary() {
+            return true;
+        }
+
+        private boolean write(Packet pkt) throws IOException {
+            if(!Thread.currentThread().equals(socketThread)){
                 //Only registered socket thread is expected to write to the stream.
                 return false;
             }
@@ -219,10 +222,18 @@ public abstract class RemoteInterfaceAdaptor{
         private void invalidate() throws IOException {
             active = false;
             adaptor.notifySocketException(remoteAddress);
-            socketThread.removeStream(remoteAddress);
-            socket.getInputStream().close();
-            socket.getOutputStream().close();
-            socket.close();
+            if(socketThread != null){
+                socketThread.removeStream(remoteAddress);
+                if(socketThread.connections.size() == 0){
+                    socketThread.interrupt();
+                    socketThread = null;
+                }
+            }
+            if(socket != null){
+                socket.getInputStream().close();
+                socket.getOutputStream().close();
+                socket.close();
+            }
         }
 
         private PipedOutputStream getPipedOutputStream() throws IOException {
@@ -279,7 +290,7 @@ public abstract class RemoteInterfaceAdaptor{
      */
     private final static class SocketThread extends Thread{
 
-        private static final int STREAM_REFRESH_INTERVAL = 100;
+        private static final int STREAM_REFRESH_INTERVAL = 5000;
         RemoteInterfaceAdaptor adaptor;
         private volatile Map<String, Connection> connections;
         private boolean errorState;

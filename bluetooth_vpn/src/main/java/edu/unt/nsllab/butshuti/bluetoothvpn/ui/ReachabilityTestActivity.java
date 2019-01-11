@@ -27,13 +27,13 @@ public class ReachabilityTestActivity extends Activity implements SDQuery.SDProg
     public static final String ACTION_START_REACHABILITY_TEST = "START_REACHABILITY_TEST";
     private final static int DEFAULT_MAX_PROBES = 20;
     private final static int PROGRESSBAR_SCALE = 100;
-    private int numAttempts = 1;
+    private int numAttempts;
     private SDGracefulScheduler sdScheduler;
     private boolean isDismissed = false;
     private ProgressBar progressBar, spinningWheel;
     private TextView progressTextView, networkStateTextView;
     private View progressView, networkStatusView;
-    private long lastRequestTs = -1;
+    private long lastRequestTs;
     private InetAddress targetHost;
     private SDQueryExecutor sdQueryExecutor;
 
@@ -52,6 +52,8 @@ public class ReachabilityTestActivity extends Activity implements SDQuery.SDProg
         progressBar.setMax(PROGRESSBAR_SCALE);
         progressTextView.setText("Preparing service discovery.");
         sdScheduler = new SDGracefulScheduler(-1, -1, SDGracefulScheduler.ConnState.CONN_WAIT);
+        numAttempts = 1;
+        lastRequestTs = -1;
         if(savedInstanceState == null){
             lastRequestTs = getCurTsSeconds();
         }
@@ -227,7 +229,6 @@ public class ReachabilityTestActivity extends Activity implements SDQuery.SDProg
         spinningWheel.setVisibility(View.VISIBLE);
         progressBar.setProgress((int)val);
         progressTextView.setText(val + "%");
-        Logger.logI("posting Results: " + progressTextView.getText());
     }
 
     /**

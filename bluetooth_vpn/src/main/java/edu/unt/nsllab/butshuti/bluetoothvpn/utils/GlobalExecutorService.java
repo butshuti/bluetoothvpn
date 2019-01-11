@@ -17,7 +17,7 @@ public class GlobalExecutorService {
     public static TaskWrapper submit(Runnable task, String label){
         synchronized (pendingTasks){
             if(pendingTasks.containsKey(label) && !(pendingTasks.get(label).isDone() || pendingTasks.get(label).isCancelled())){
-                return wrap(pendingTasks.get(label));
+                pendingTasks.get(label).cancel(true);
             }
         }
         Future f = executorService.submit(getNamedRunnable(task, label));
