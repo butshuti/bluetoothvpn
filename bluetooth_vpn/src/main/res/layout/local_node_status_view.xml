@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<edu.unt.nsllab.butshuti.bluetoothvpn.ui.custom_views.ServiceStatusCardView
+<edu.unt.nslab.butshuti.bluetoothvpn.ui.custom_views.ServiceStatusCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:foreground="?android:attr/selectableItemBackground"
@@ -69,21 +69,21 @@
             android:layout_height="wrap_content"
             android:padding="5dp"
             android:weightSum="3">
-            <edu.unt.nsllab.butshuti.bluetoothvpn.ui.custom_views.TwoColumnsTaggedTextView
+            <edu.unt.nslab.butshuti.bluetoothvpn.ui.custom_views.TwoColumnsTaggedTextView
                 android:id="@+id/service_status_column"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:layout_weight="1"
                 app:column_title="Status:"
                 app:column_content="DISCONNECTED" />
-            <edu.unt.nsllab.butshuti.bluetoothvpn.ui.custom_views.TwoColumnsTaggedTextView
+            <edu.unt.nslab.butshuti.bluetoothvpn.ui.custom_views.TwoColumnsTaggedTextView
                 android:id="@+id/peer_count_column"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:layout_weight="1"
                 app:column_title="Recent Peers:"
                 app:column_content="4"/>
-            <edu.unt.nsllab.butshuti.bluetoothvpn.ui.custom_views.TwoColumnsTaggedTextView
+            <edu.unt.nslab.butshuti.bluetoothvpn.ui.custom_views.TwoColumnsTaggedTextView
                 android:id="@+id/pkt_count_column"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
@@ -92,4 +92,4 @@
                 app:column_content="0"/>
         </LinearLayout>
     </LinearLayout>
-</edu.unt.nsllab.butshuti.bluetoothvpn.ui.custom_views.ServiceStatusCardView>
+</edu.unt.nslab.butshuti.bluetoothvpn.ui.custom_views.ServiceStatusCardView>

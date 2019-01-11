@@ -2,7 +2,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="edu.unt.nsllab.butshuti.bluetoothvpn.ui.BluetoothVPNActivity"
+    tools:context="edu.unt.nslab.butshuti.bluetoothvpn.ui.BluetoothVPNActivity"
     tools:showIn="diagnostics_screen_navigation_view">
     <item android:title="@string/menu_title_network_diagnostics">
         <menu>

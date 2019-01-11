@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<edu.unt.nsllab.butshuti.bluetoothvpn.ui.custom_views.NodeStatusCardView
+<edu.unt.nslab.butshuti.bluetoothvpn.ui.custom_views.NodeStatusCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:foreground="?android:attr/selectableItemBackground"
     android:clickable="true"
@@ -40,4 +40,4 @@
             android:padding="2dp"
             android:textColor="@android:color/darker_gray"/>
     </LinearLayout>
-</edu.unt.nsllab.butshuti.bluetoothvpn.ui.custom_views.NodeStatusCardView>
+</edu.unt.nslab.butshuti.bluetoothvpn.ui.custom_views.NodeStatusCardView>
