@@ -6,6 +6,9 @@ A Bluetooth-based VPN application for Android.
  that a simple piconet cannot support: an arbitrary number of inter-connected peers in the network 
  (up to 20 devices in transitive proximity), and a wider range (when peers are scattered as relays over a large coverage area).
  
+ ![bluetoothvpn_home_small.png](https://bitbucket.org/repo/x8ELkxj/images/2484036129-bluetoothvpn_home_small.png)
+ ![bluetoothvpn_ping_results_small.png](https://bitbucket.org/repo/x8ELkxj/images/2201839970-bluetoothvpn_ping_results_small.png)
+
  # How to Use
  ## Prerequisites
  1. Dowload sources and build with `Gradle`
